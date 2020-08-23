@@ -1,38 +1,69 @@
 ---
-title: "Nba players analysis"
-author: "Przemek Szafert"
-date: "8/22/2020"
+##title: "Nba players analysis"
+##author: "Przemek Szafert"
+##date: "8/22/2020"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(
+  echo = TRUE)
+
+```
+
+```{r data import, include=FALSE}
 
 library("tidyverse")
+library("knitr")
+library(plotly)
 
-
-player <- read.csv("../data_raw/datasets_1358_30676_Players.csv")
-playerData <- read_csv("../data_raw/datasets_1358_30676_Players.csv")
-Seasons_stats <- read_csv("../data_raw/Seasons_Stats.csv")
+player <- read.csv("../data_raw/datasets_1358_30676_Players.csv") %>%
+  select(-1,)
+playerData <- read_csv("../data_raw/datasets_1358_30676_player_data.csv")
+Seasons_stats <- read_csv("../data_raw/Seasons_Stats.csv")%>%
+    filter(Year > 1985)
 
 ```
 
-## R Markdown
+## Short dataset description
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+Three datasets are used:
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+1. **`Players`**  contains 3922 observations of 7 variables. 
 
-```{r palyer}
-summary(player)
+1. **`player_data`** contains 4550 observations of 8 variables. 
+
+1. **`Seasons_Stats`** contains 24691 observations of 53 variables. 
+
+
+
+## General Statistics
+
+### Points per game
+
+```{r Points-per-game}
+
+Ppg <- Seasons_stats %>%
+  group_by(Player)%>%
+  summarise(sum.PTS = sum(PTS), sum.G = sum(G))%>%
+  mutate(avg.PTSperG = sum.PTS/sum.G) %>%
+  #ungroup()%>%
+  select(Player,sum.PTS, sum.G,avg.PTSperG)%>%
+  arrange(desc(avg.PTSperG))
+
+
+p <- ggplot(Ppg, aes (
+        x = sum.G, 
+        y = avg.PTSperG,
+        color = Player,
+        shape = ifelse(Player == 'Michael Jordan*', 'TRUE', 'FALSE')
+        #size = avg.PTSperG
+        )) +
+        geom_point(aes (alpha = 1 / 10)) +
+        scale_shape_manual(guide = F, values = c(18,15))+
+        theme(legend.position = "none")
+
+fig <- ggplotly(p)
+fig
+
 ```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
